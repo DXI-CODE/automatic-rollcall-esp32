@@ -3,6 +3,7 @@
 #include <Adafruit_PN532.h>
 #include <LiquidCrystal_I2C.h> // Driver Library for the LCD Module
 
+//PRUEBA
 // Definición de pines para I2C
 #define SDA_PIN D2
 #define SCL_PIN D3
