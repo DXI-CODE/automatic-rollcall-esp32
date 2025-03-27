@@ -28,7 +28,7 @@ void imprimir(const char* cad){
 
 void imprimirdatosdetarjeta(){
   unsigned char data[600];
-  char data2[32];
+  char data2[32] {0};
   uint8_t success;
   uint8_t i = 15;
   uint8_t j=0;
