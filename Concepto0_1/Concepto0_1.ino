@@ -19,7 +19,7 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", -21600, 60000); // Ajuste UTC-6 (México)
 
 void imprimirdatosdetarjeta() {
-   unsigned char data[4]; // Solo se leen 4 bytes por página
+   unsigned char data[4]; // Solo se leen 4 bytes por página
     char data2[32] = {0};  // Inicializar el buffer con ceros
     uint8_t success;
     uint8_t i, j;
@@ -36,7 +36,7 @@ void imprimirdatosdetarjeta() {
                 // Detectar el delimitador de inicio y fin
                 if (caracter == '|') {
                     if (dentroDelimitador) {
-                        // Si ya estábamos dentro, cerrar la cadena y salir
+                        // Si ya estábamos dentro, cerrar la cadena y salir
                         data2[index] = '\0';
                         goto fin_lectura;
                     } else {
@@ -52,25 +52,26 @@ void imprimirdatosdetarjeta() {
                 }
             }
         } else {
-            Serial.println("Error al leer la página NFC");
+            Serial.println("Error al leer la página NFC");
         }
     }
 
 fin_lectura:
-    data2[index] = '\0'; // Asegurar la terminación de cadena
+    data2[index] = '\0'; // Asegurar la terminación de cadena
 
-    Serial.println("\nDatos leídos de la tarjeta:");
+    Serial.println("\nDatos leídos de la tarjeta:");
     Serial.println(data2);
-
 
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print(data2); // Mostrar nombre
+  // Imprimir solo una parte del nombre en la primera línea si es largo
+  lcd.print(data2); 
 
   lcd.setCursor(0, 1);
   lcd.print("Hora: ");
   lcd.print(timeClient.getFormattedTime()); // Mostrar hora de registro
 }
+
 
 void setup() {
   Serial.begin(115200);
