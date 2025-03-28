@@ -1,146 +1,100 @@
 #include "ESP8266WiFi.h"
 #include <Wire.h>
 #include <Adafruit_PN532.h>
-#include <LiquidCrystal_I2C.h> // Driver Library for the LCD Module
+#include <LiquidCrystal_I2C.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
 
-//PRUEBA rama
-// Definición de pines para I2C
 #define SDA_PIN D2
 #define SCL_PIN D3
 #define BUZZER_PIN D5
 
-// WiFi parameters to be configured
-const char* ssid = "LAB ELECTRONICA E IA"; // Write here your router's username
-const char* password = "Electro2024.#."; // Write here your router's passward
+const char* ssid = "LAB ELECTRONICA E IA";
+const char* password = "Electro2024.#.";
 
-// Construct an LCD object and pass it the 
-// I2C address, width (in characters) and
-// height (in characters). Depending on the
-// Actual device, the IC2 address may change.
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 Adafruit_PN532 nfc(SDA_PIN, SCL_PIN);
 
-void imprimir(const char* cad){
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.print(cad);
-}
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", -21600, 60000); // Ajuste UTC-6 (México)
 
 void imprimirdatosdetarjeta() {
-    unsigned char data[4]; // Solo se leen 4 bytes por página
-    char data2[32] = {0};  // Inicializar el buffer con ceros
-    uint8_t success;
-    uint8_t i, j;
-    uint8_t index = 0;
-    bool dentroDelimitador = false; // Bandera para saber si estamos entre delimitadores
+  unsigned char data[4];
+  char data2[32] = {0};
+  uint8_t success;
+  uint8_t i, j;
 
-    for (i = 15; i < 23; i++) {
-        success = nfc.ntag2xx_ReadPage(i, data);
-        
-        if (success) {
-            for (j = 0; j < 4; j++) {
-                char caracter = (char)data[j];
-                
-                // Detectar el delimitador de inicio y fin
-                if (caracter == '|') {
-                    if (dentroDelimitador) {
-                        // Si ya estábamos dentro, cerrar la cadena y salir
-                        data2[index] = '\0';
-                        goto fin_lectura;
-                    } else {
-                        // Detecta el primer delimitador
-                        dentroDelimitador = true;
-                        continue; // Ignorar el delimitador inicial
-                    }
-                }
+  for (i = 15; i < 23; i++) {
+      success = nfc.ntag2xx_ReadPage(i, data);
 
-                // Solo almacenar si estamos entre delimitadores
-                if (dentroDelimitador) {
-                    data2[index++] = caracter;
-                }
-            }
-        } else {
-            Serial.println("Error al leer la página NFC");
-        }
-    }
+      if (success) {
+          for (j = 0; j < 4; j++) {
+              data2[(i - 15) * 4 + j] = (char)data[j];
+              if (data[j] == '|') {
+                  data2[(i - 15) * 4 + j] = '\0';
+                  break;
+              }
+          }
+      } else {
+          Serial.println("Error al leer la página NFC");
+      }
+  }
 
-fin_lectura:
-    data2[index] = '\0'; // Asegurar la terminación de cadena
+  data2[(i - 15) * 4] = '\0';
+  Serial.println("\nDatos leídos de la tarjeta:");
+  Serial.println(data2);
 
-    Serial.println("\nDatos leídos de la tarjeta:");
-    Serial.println(data2);
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print(data2); // Mostrar nombre
 
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print(data2); // Mostrar en LCD
+  lcd.setCursor(0, 1);
+  lcd.print("Hora: ");
+  lcd.print(timeClient.getFormattedTime()); // Mostrar hora de registro
 }
 
-
 void setup() {
-    Serial.begin(115200);
-    lcd.begin(20,4);
-    lcd.init();
-    lcd.backlight();
+  Serial.begin(115200);
+  lcd.begin(20, 4);
+  lcd.init();
+  lcd.backlight();
 
-    nfc.begin();
-    nfc.SAMConfig(); 
+  nfc.begin();
+  nfc.SAMConfig();
 
-    if (!nfc.getFirmwareVersion()) {
-        Serial.println("No se encontró el módulo NFC");
-        while (1);
-    }
+  WiFi.begin(ssid, password);
+  lcd.setCursor(0, 0);
+  lcd.print("Conectando a WiFi");
 
-    // Conexión a WiFi
-    imprimir("Conectando a:");
-    lcd.setCursor(0, 1);
-    lcd.print(ssid);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+  }
 
-    WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-    }
+  lcd.clear();
+  lcd.print("Conectado!");
 
-    imprimir("Conectado!");
-    lcd.setCursor(0, 1);
-    lcd.print(WiFi.localIP());
-    delay(1000);
-    lcd.clear();
+  timeClient.begin(); // Iniciar NTP
 }
 
 void loop() {
-    uint8_t success;
-    uint8_t uid[7]; 
-    uint8_t uidLength;
+  timeClient.update(); // Obtener hora actual
 
-    lcd.setCursor(0, 0);
-    lcd.print("21/03/21"); 
-    lcd.setCursor(0, 1);
-    lcd.print("Sistemas embebidos");
-    lcd.setCursor(0, 2);
-    lcd.print("Cierre: 8:15 AM");
-    lcd.setCursor(0, 3);
-    lcd.print("Escanea tu tarjeta");
+  uint8_t success;
+  uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0};
+  uint8_t uidLength;
 
-    success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
+  lcd.setCursor(0, 0);
+  lcd.print("Escanea tu credencial escolar");
 
-    if (success) {
-        tone(BUZZER_PIN, 3000, 500);
+  success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
 
-        Serial.print("Tarjeta detectada con UID: ");
-        for (uint8_t i = 0; i < uidLength; i++) {
-            Serial.print(uid[i], HEX);
-            Serial.print(" ");
-        }
-        Serial.println();
+  if (success) {
+    tone(BUZZER_PIN, 3000, 500);
+    lcd.clear();
+    imprimirdatosdetarjeta();
+    delay(4000);
+    lcd.clear();
+  }
 
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("Hora: 8:10 AM");
-        imprimirdatosdetarjeta();
-
-        delay(4000);
-        lcd.clear();
-    }
-
-    delay(1000);
+  delay(1000);
 }
