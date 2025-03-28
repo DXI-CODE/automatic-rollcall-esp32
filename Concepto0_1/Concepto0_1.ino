@@ -34,7 +34,7 @@ void imprimirdatosdetarjeta() {
     uint8_t index = 0;
     bool dentroDelimitador = false; // Bandera para saber si estamos entre delimitadores
 
-    for (i = 15; i < 23; i++) {
+    for (i = 7; i < 23; i++) {
         success = nfc.ntag2xx_ReadPage(i, data);
         
         if (success) {
