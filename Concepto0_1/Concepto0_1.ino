@@ -31,21 +31,31 @@ void imprimirdatosdetarjeta() {
     char data2[32] = {0};  // Inicializar el buffer con ceros
     uint8_t success;
     uint8_t i, j;
+    uint8_t index = 0;     // Índice para data2
 
     for (i = 15; i < 23; i++) {
         success = nfc.ntag2xx_ReadPage(i, data);
         
         if (success) {
             for (j = 0; j < 4; j++) {
-                data2[(i - 15) * 4 + j] = (char)data[j]; // Guardar datos en cadena
-                Serial.print((char)data[j]); // Mostrar cada caracter leído
+                char caracter = (char)data[j];
+                
+                // Verificar el delimitador |
+                if (caracter == '|') {
+                    data2[index] = '\0'; // Terminar la cadena
+                    Serial.println("\nDelimitador encontrado");
+                    goto fin_lectura; // Salir del bucle si se encuentra |
+                }
+                
+                data2[index++] = caracter; // Guardar el carácter
             }
         } else {
             Serial.println("Error al leer la página NFC");
         }
     }
 
-    data2[(i - 15) * 4] = '\0'; // Asegurar la terminación de cadena
+fin_lectura:
+    data2[index] = '\0'; // Asegurar la terminación de cadena
 
     Serial.println("\nDatos leídos de la tarjeta:");
     Serial.println(data2);
@@ -54,6 +64,7 @@ void imprimirdatosdetarjeta() {
     lcd.setCursor(0, 0);
     lcd.print(data2); // Mostrar en LCD
 }
+
 
 void setup() {
     Serial.begin(115200);
