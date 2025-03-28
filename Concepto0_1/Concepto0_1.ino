@@ -31,7 +31,8 @@ void imprimirdatosdetarjeta() {
     char data2[32] = {0};  // Inicializar el buffer con ceros
     uint8_t success;
     uint8_t i, j;
-    uint8_t index = 0;     // Índice para data2
+    uint8_t index = 0;
+    bool dentroDelimitador = false; // Bandera para saber si estamos entre delimitadores
 
     for (i = 15; i < 23; i++) {
         success = nfc.ntag2xx_ReadPage(i, data);
@@ -40,14 +41,23 @@ void imprimirdatosdetarjeta() {
             for (j = 0; j < 4; j++) {
                 char caracter = (char)data[j];
                 
-                // Verificar el delimitador |
+                // Detectar el delimitador de inicio y fin
                 if (caracter == '|') {
-                    data2[index] = '\0'; // Terminar la cadena
-                    Serial.println("\nDelimitador encontrado");
-                    goto fin_lectura; // Salir del bucle si se encuentra |
+                    if (dentroDelimitador) {
+                        // Si ya estábamos dentro, cerrar la cadena y salir
+                        data2[index] = '\0';
+                        goto fin_lectura;
+                    } else {
+                        // Detecta el primer delimitador
+                        dentroDelimitador = true;
+                        continue; // Ignorar el delimitador inicial
+                    }
                 }
-                
-                data2[index++] = caracter; // Guardar el carácter
+
+                // Solo almacenar si estamos entre delimitadores
+                if (dentroDelimitador) {
+                    data2[index++] = caracter;
+                }
             }
         } else {
             Serial.println("Error al leer la página NFC");
