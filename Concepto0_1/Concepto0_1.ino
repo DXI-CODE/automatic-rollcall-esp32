@@ -24,7 +24,7 @@ void imprimirdatosdetarjeta() {
   uint8_t success;
   uint8_t i, j;
 
-  for (i = 15; i < 23; i++) {
+  for (i = 7; i < 23; i++) {
       success = nfc.ntag2xx_ReadPage(i, data);
 
       if (success) {
