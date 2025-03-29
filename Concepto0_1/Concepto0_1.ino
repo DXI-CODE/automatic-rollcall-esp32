@@ -62,14 +62,22 @@ fin_lectura:
     Serial.println("\nDatos leídos de la tarjeta:");
     Serial.println(data2);
 
-  lcd.clear();
   lcd.setCursor(0, 0);
-  // Imprimir solo una parte del nombre en la primera línea si es largo
-  lcd.print(data2); 
-
-  lcd.setCursor(0, 1);
   lcd.print("Hora: ");
   lcd.print(timeClient.getFormattedTime()); // Mostrar hora de registro
+
+  for(int i=0, j=0; data2[j+(i*20)] != '\0'; i++){
+    char aux[32] = {0};
+    for(j=0; j<20 && data2[j+(i*20)] != '\0'; j++){
+      aux[j] = data2[j+(i*20)];
+      if(data2[j] == '\0'){
+        aux[j] = data2[j+(i*20)];
+      }
+    }
+    lcd.setCursor(0, i+1);
+    lcd.print(aux); 
+  }
+  
 }
 
 
@@ -111,7 +119,8 @@ void loop() {
       lcd.setCursor(0, 1);
       lcd.print(ssid);
       while (WiFi.status() != WL_CONNECTED) {
-      delay(500);
+      delay(5000);
+      WiFi.reconnect();
       }
       lcd.clear();
       lcd.print("Conectado!");
@@ -120,6 +129,7 @@ void loop() {
 
     lcd.setCursor(0, 0);
     lcd.print(timeClient.getFormattedTime());
+    //Serial.println(timeClient.getFormattedTime());
     lcd.setCursor(0, 1);
     lcd.print("Sistemas embebidos");
     lcd.setCursor(0, 2);
@@ -127,15 +137,17 @@ void loop() {
     lcd.setCursor(0, 3);
     lcd.print("Escanea tu tarjeta");
 
-  success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength);
-
-  if (success) {
+  
+    success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 900);
+    if (success) {
+      lcd.clear();
     tone(BUZZER_PIN, 2500, 500);
     imprimirdatosdetarjeta();
-    delay(4000);
+    delay(3000);
     lcd.clear();
-  }else{
-    delay(1000);
-    }
-
+  }
+  delay(50);
+  
+    
+    
 }
