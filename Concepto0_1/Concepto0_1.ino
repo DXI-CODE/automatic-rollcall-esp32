@@ -7,6 +7,7 @@
 #include <SPI.h>
 #include <SD.h>
 
+
 #define SDA_PIN D2
 #define SCL_PIN D3
 #define BUZZER_PIN D0
@@ -14,7 +15,9 @@
 
 const char* ssid = "LAB ELECTRONICA E IA";
 const char* password = "Electro2024.#.";
+
 char day[7][32] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
 
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 Adafruit_PN532 nfc(SDA_PIN, SCL_PIN);
@@ -23,6 +26,7 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", -21600, 60000); // Ajuste UTC-6 (México)
 
 void imprimirdatosdetarjeta() {
+
    unsigned char data[4]; // Solo se leen 4 bytes por página
     char data2[32] = {0};  // Inicializar el buffer con ceros
     uint8_t success;
@@ -30,7 +34,9 @@ void imprimirdatosdetarjeta() {
     uint8_t index = 0;
     bool dentroDelimitador = false; // Bandera para saber si estamos entre delimitadores
 
+
     for (i = 7; i < 26; i++) {
+
         success = nfc.ntag2xx_ReadPage(i, data);
         
         if (success) {
@@ -40,7 +46,6 @@ void imprimirdatosdetarjeta() {
                 // Detectar el delimitador de inicio y fin
                 if (caracter == '|') {
                     if (dentroDelimitador) {
-                        // Si ya estábamos dentro, cerrar la cadena y salir
                         data2[index] = '\0';
                         goto fin_lectura;
                     } else {
@@ -56,11 +61,14 @@ void imprimirdatosdetarjeta() {
                 }
             }
         } else {
+
             Serial.println("Error al leer la página NFC");
+
         }
     }
 
 fin_lectura:
+
     data2[index] = '\0'; // Asegurar la terminación de cadena
 
     Serial.println("\nDatos leídos de la tarjeta:");
@@ -81,19 +89,22 @@ fin_lectura:
     lcd.setCursor(0, i+1);
     lcd.print(aux); 
   }
-  
+
 }
 
 
 void setup() {
   Serial.begin(115200);
+
   Serial.println("Iniciando");
+
   lcd.begin(20, 4);
   lcd.init();
   lcd.backlight();
   Serial.println("Pantalla lista");
   nfc.begin();
   nfc.SAMConfig();
+
 
   if (!SD.begin(PIN_CS)) {
     lcd.clear();
@@ -138,6 +149,7 @@ void setup() {
 }
 
 void loop() {
+
   timeClient.forceUpdate();
   char horaString[20];
   sprintf(horaString, "%s %d:%d", day[timeClient.getDay()], timeClient.getHours(), timeClient.getMinutes());
@@ -164,6 +176,7 @@ void loop() {
     lcd.print("Sistemas embebidos");
     lcd.setCursor(0, 2);
     lcd.print("Cierre: 8:15");
+
     lcd.setCursor(0, 3);
     lcd.print("Escanea tu tarjeta");
 
