@@ -139,6 +139,9 @@ void setup() {
 
 void loop() {
   timeClient.forceUpdate();
+  char horaString[20];
+  sprintf(horaString, "%s %d:%d", day[timeClient.getDay()], timeClient.getHours(), timeClient.getMinutes());
+
   uint8_t success;
   uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0};
   uint8_t uidLength;
@@ -156,9 +159,7 @@ void loop() {
       lcd.print("Conectado!");
     }
     lcd.setCursor(0, 0);
-    lcd.print(day[timeClient.getDay()]);
-    lcd.setCursor(7, 0);
-    lcd.print(timeClient.getFormattedTime());
+    lcd.print(horaString);
     lcd.setCursor(0, 1);
     lcd.print("Sistemas embebidos");
     lcd.setCursor(0, 2);
