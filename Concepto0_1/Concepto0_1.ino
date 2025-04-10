@@ -6,7 +6,7 @@
 #include <WiFiUdp.h>
 #include <SPI.h>
 #include <SD.h>
-
+#include <ArduinoJson.h>
 
 #define SDA_PIN D2
 #define SCL_PIN D3
@@ -150,9 +150,9 @@ void setup() {
 
 void loop() {
 
-  timeClient.forceUpdate();
-  char horaString[20];
-  sprintf(horaString, "%s %d:%d", day[timeClient.getDay()], timeClient.getHours(), timeClient.getMinutes());
+  timeClient.update();
+  char horaString[32];
+  sprintf(horaString, "%s %d:%d Grupo:%d", day[timeClient.getDay()], timeClient.getHours(), timeClient.getMinutes(), 604);
 
   uint8_t success;
   uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0};
@@ -181,7 +181,7 @@ void loop() {
     lcd.print("Escanea tu tarjeta");
 
   
-    success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 500);
+    success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 1000);
     if (success) {
       lcd.clear();
     tone(BUZZER_PIN, 2500, 500);
