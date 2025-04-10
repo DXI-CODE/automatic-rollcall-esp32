@@ -16,7 +16,7 @@
 const char* ssid = "LAB ELECTRONICA E IA";
 const char* password = "Electro2024.#.";
 
-char day[7][32] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+char day[7][32] = {"Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"};
 
 
 LiquidCrystal_I2C lcd(0x27, 20, 4);
@@ -152,7 +152,19 @@ void loop() {
 
   timeClient.update();
   char horaString[32];
-  sprintf(horaString, "%s %d:%d Grupo:%d", day[timeClient.getDay()], timeClient.getHours(), timeClient.getMinutes(), 604);
+  int8_t dia = timeClient.getDay();
+  int8_t min = timeClient.getMinutes();
+  int8_t hora = timeClient.getHours(); 
+  if(hora < 10 && min < 10){
+    sprintf(horaString, "%s 0%d:0%d Grupo:%d", day[dia], hora, min, 604);
+  }else if(hora < 10 && min >= 10){
+    sprintf(horaString, "%s 0%d:%d Grupo:%d", day[dia], hora, min, 604);
+  }else if(hora >= 10 && min < 10){
+    sprintf(horaString, "%s %d:0%d Grupo:%d", day[dia], hora, min, 604);
+  }else{
+    sprintf(horaString, "%s %d:%d Grupo:%d", day[dia], hora, min, 604);
+  }
+  
 
   uint8_t success;
   uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0};
