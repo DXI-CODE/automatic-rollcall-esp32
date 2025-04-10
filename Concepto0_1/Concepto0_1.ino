@@ -157,3 +157,161 @@ void loop() {
 
     delay(1000); // Esperar un segundo antes de volver a leer
 }
+
+-------------------------------------------------------
+#include <FS.h>
+#include <SD.h>
+#include <SPI.h>
+#include <ArduinoJson.h>
+
+#define SD_CS_PIN D8  // Pin CS para el SD
+
+void setup() {
+  Serial.begin(115200);
+
+  if (!SD.begin(SD_CS_PIN)) {
+    Serial.println("Fallo al iniciar la tarjeta SD");
+    return;
+  }
+
+  Serial.println("Tarjeta SD iniciada correctamente");
+
+  File file = SD.open("/datos.json");
+  if (!file) {
+    Serial.println("No se pudo abrir el archivo datos.json");
+    return;
+  }
+
+  StaticJsonDocument<256> doc;
+  DeserializationError error = deserializeJson(doc, file);
+
+  if (error) {
+    Serial.print("Error al deserializar JSON: ");
+    Serial.println(error.c_str());
+    return;
+  }
+
+  const char* nombre = doc["nombre"];
+  int edad = doc["edad"];
+
+  Serial.print("Nombre: ");
+  Serial.println(nombre);
+  Serial.print("Edad: ");
+  Serial.println(edad);
+
+  file.close();
+}
+
+void loop() {
+  // Nada en loop
+}
+
+--------------------------------------------------------------
+#include <ArduinoJson.h>
+#include <SPI.h>
+#include <SD.h>
+
+const int chipSelect = D8; // Pin CS conectado al lector SD
+
+void setup() {
+  Serial.begin(115200);
+  while (!Serial); // Espera a que el puerto serial esté listo (solo para debug)
+
+  Serial.println("Inicializando tarjeta SD...");
+  
+  if (!SD.begin(chipSelect)) {
+    Serial.println("Fallo en la inicialización!");
+    Serial.println("Verifica:");
+    Serial.println("1. Que la tarjeta SD esté insertada");
+    Serial.println("2. Las conexiones del lector SD");
+    Serial.println("3. Que el archivo exista y tenga formato correcto");
+    return;
+  }
+  Serial.println("Tarjeta SD inicializada correctamente.");
+
+  // Abrir el archivo JSON
+  File jsonFile = SD.open("/config.json");
+  if (!jsonFile) {
+    Serial.println("Error al abrir config.json");
+    return;
+  }
+
+  // Verificar tamaño del archivo
+  size_t size = jsonFile.size();
+  if (size > 1024) {
+    Serial.println("Archivo JSON demasiado grande");
+    return;
+  }
+
+  // Leer y parsear el JSON
+  DynamicJsonDocument doc(1024);
+  DeserializationError error = deserializeJson(doc, jsonFile);
+  
+  if (error) {
+    Serial.print("Error al parsear JSON: ");
+    Serial.println(error.c_str());
+    return;
+  }
+
+  // Extraer valores del JSON
+  const char* nombre = doc["nombre"];
+  int valor = doc["valor"];
+  bool activo = doc["activo"];
+
+  // Mostrar valores
+  Serial.println("\nValores leídos del JSON:");
+  Serial.print("Nombre: "); Serial.println(nombre);
+  Serial.print("Valor: "); Serial.println(valor);
+  Serial.print("Activo: "); Serial.println(activo ? "SI" : "NO");
+
+  jsonFile.close();
+}
+
+void loop() {
+  // Nada aquí
+}
+---------------------------------------------------------------
+#include <ArduinoJson.h>
+#include <SPI.h>
+#include <SD.h>
+
+// Configuración del pin CS para el lector de tarjeta SD
+const int chipSelect = 10; // Ajusta este valor según tu módulo
+
+void setup() {
+  Serial.begin(115200);
+
+  // Inicializar la tarjeta SD
+  if (!SD.begin(chipSelect)) {
+    Serial.println("Error al inicializar la tarjeta SD");
+    return;
+  }
+
+  // Abrir el archivo JSON
+  File file = SD.open("datos.json");
+  if (!file) {
+    Serial.println("Error al abrir el archivo");
+    return;
+  }
+
+  // Deserializar el archivo JSON
+  DynamicJsonDocument doc(1024); // Ajusta el tamaño según tu archivo JSON
+  DeserializationError error = deserializeJson(doc, file);
+  if (error) {
+    Serial.print("Error al leer JSON: ");
+    Serial.println(error.c_str());
+    return;
+  }
+
+  // Acceder a los datos del JSON
+  const char* nombre = doc["nombre"];
+  int edad = doc["edad"];
+  Serial.println(nombre);
+  Serial.println(edad);
+
+  file.close(); // Cerrar el archivo
+}
+
+void loop() {
+  // Nada que hacer aquí
+}
