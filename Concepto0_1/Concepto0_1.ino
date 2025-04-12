@@ -17,7 +17,18 @@ const char* ssid = "LAB ELECTRONICA E IA";
 const char* password = "Electro2024.#.";
 
 char day[7][32] = {"Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"};
+char dayEleccion[7][32] = {"\"Dom\"", "\"Lun\"", "\"Mar\"", "\"Mie\"", "\"Jue\"", "\"Vie\"", "\"Sab\""};
+char numClase[7][32] = {"\"0\"", "\"1\"", "\"2\"", "\"3\"", "\"4\"", "\"5\"", "\"6\""};
 
+char *archivo;
+JsonDocument clases;
+uint8_t horaInicio;
+uint8_t minutoInicio;
+uint8_t horaCierre;
+uint8_t minutoCierre;
+uint8_t claseActual;
+uint8_t grupo;
+String nombre;
 
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 Adafruit_PN532 nfc(SDA_PIN, SCL_PIN);
@@ -146,6 +157,26 @@ void setup() {
   delay(1000);
   lcd.clear();
   timeClient.begin(); // Iniciar NTP
+
+  archivo = (char*)malloc(sizeof(char) * 2500);
+  //Tarjeta SD
+  lcd.print("Leyendo SD");
+  int i = 0;
+  File dataFile = SD.open("Lunes2.json");
+  // if the file is available, write to it:
+  if (dataFile) {
+    while (dataFile.available()) { 
+      archivo[i] = dataFile.read(); 
+      Serial.write(archivo[i]);
+      i++;
+      }
+    dataFile.close();
+  }
+  deserializeJson(clases, archivo);
+  free(archivo);
+  //serializeJson(clases, Serial);
+  lcd.clear();
+  claseActual = 0;
 }
 
 void loop() {
@@ -155,22 +186,12 @@ void loop() {
   int8_t dia = timeClient.getDay();
   int8_t min = timeClient.getMinutes();
   int8_t hora = timeClient.getHours(); 
-  if(hora < 10 && min < 10){
-    sprintf(horaString, "%s 0%d:0%d Grupo:%d", day[dia], hora, min, 604);
-  }else if(hora < 10 && min >= 10){
-    sprintf(horaString, "%s 0%d:%d Grupo:%d", day[dia], hora, min, 604);
-  }else if(hora >= 10 && min < 10){
-    sprintf(horaString, "%s %d:0%d Grupo:%d", day[dia], hora, min, 604);
-  }else{
-    sprintf(horaString, "%s %d:%d Grupo:%d", day[dia], hora, min, 604);
-  }
-  
-
   uint8_t success;
   uint8_t uid[] = {0, 0, 0, 0, 0, 0, 0};
   uint8_t uidLength;
 
-    if(WiFi.status() != WL_CONNECTED){
+
+  if(WiFi.status() != WL_CONNECTED){
       lcd.setCursor(0, 0);
       lcd.print("Conectando a:");
       lcd.setCursor(0, 1);
@@ -182,26 +203,97 @@ void loop() {
       lcd.clear();
       lcd.print("Conectado!");
     }
+  
+  if(dia != 0 && dia != 6){
+      if(claseActual < 2){
+        horaInicio = clases[dayEleccion[dia-1]][numClase[claseActual]]["h_inicio"];
+        minutoInicio = clases[dayEleccion[dia-1]][numClase[claseActual]]["m_inicio"];
+        horaCierre = clases[dayEleccion[dia-1]][numClase[claseActual]]["h_fin"];
+        minutoCierre = clases[dayEleccion[dia-1]][numClase[claseActual]]["m_fin"];
+        grupo = clases[dayEleccion[dia-1]][numClase[claseActual]]["grupo"];
+      }
+    
+    //nombre =  clases[dia-1][claseActual]["nombre"]).as<String>();
+    
+
     lcd.setCursor(0, 0);
-    lcd.print(horaString);
+    if(hora < 10 && min < 10){
+      sprintf(horaString, "%s 0%d:0%d Grupo:%d", day[dia], hora, min, grupo);
+    }else if(hora < 10 && min >= 10){
+      sprintf(horaString, "%s 0%d:%d Grupo:%d", day[dia], hora, min, grupo);
+    }else if(hora >= 10 && min < 10){
+      sprintf(horaString, "%s %d:0%d Grupo:%d", day[dia], hora, min, grupo);
+    }else{
+      sprintf(horaString, "%s %d:%d Grupo:%d", day[dia], hora, min, grupo);
+    }
+    lcd.print(horaString); //Dia xx:xx grupo:yyyy
+
     lcd.setCursor(0, 1);
     lcd.print("Sistemas embebidos");
+    
+    if( ((hora >= horaInicio && hora < horaCierre) && (min >= minutoInicio)) ||         
+        (hora == horaCierre && min <= minutoCierre))   
+        {
+
     lcd.setCursor(0, 2);
-    lcd.print("Cierre: 8:15");
+    if(horaCierre < 10 && minutoCierre < 10){
+    sprintf(horaString, "Cierre: 0%d:0%d", horaCierre, minutoCierre);
+    }else if(horaCierre < 10 && minutoCierre >= 10){
+    sprintf(horaString, "Cierre: 0%d:%d",horaCierre, minutoCierre);
+    }else if(horaCierre >= 10 && minutoCierre < 10){
+    sprintf(horaString, "Cierre: %d:0%d",horaCierre, minutoCierre);
+    }else{
+    sprintf(horaString, "Cierre: %d:%d", horaCierre, minutoCierre);
+    }
+    lcd.print(horaString);// Cierre: xx:xx
+      lcd.setCursor(0, 3);
+      lcd.print("Escanea tu tarjeta");//Escaneo
 
-    lcd.setCursor(0, 3);
-    lcd.print("Escanea tu tarjeta");
+      success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 1000);
+      if (success) {
+        lcd.clear();
+        tone(BUZZER_PIN, 2500, 500);
+        imprimirdatosdetarjeta();
+        delay(3000);
+        lcd.clear();
+      }
+    }else{
+      
+      if(hora < horaInicio || ((hora == horaInicio) && (min < minutoInicio))){
+        lcd.setCursor(0, 2);
+        if(horaInicio < 10 && minutoInicio < 10){
+        sprintf(horaString, "Abre: 0%d:0%d", horaInicio, minutoInicio);
+        }else if(horaInicio < 10 && minutoInicio >= 10){
+        sprintf(horaString, "Abre: 0%d:%d",horaInicio,minutoInicio);
+        }else if(horaInicio >= 10 && minutoInicio < 10){
+        sprintf(horaString, "Abre: %d:0%d",horaInicio, minutoInicio);
+        }else{
+        sprintf(horaString, "Abre: %d:%d", horaInicio, minutoInicio);
+        }
+        lcd.print(horaString);// Abre: xx:xx
 
-  
-    success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 1000);
-    if (success) {
-      lcd.clear();
-    tone(BUZZER_PIN, 2500, 500);
-    imprimirdatosdetarjeta();
-    delay(3000);
-    lcd.clear();
-  }
+      }else if((hora > horaCierre) && (min > minutoInicio) && claseActual < 2){
+        claseActual++;
+      }else{
+        lcd.setCursor(0, 2);
+        lcd.print(claseActual);
+        lcd.setCursor(0, 3);
+        lcd.print("Ya paso el tiempo");
+      }
+      
+    }
+    
   delay(50);
+  }  
+
+    
+    
+    
+    
+
+    
+
+    
   
     
     
