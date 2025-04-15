@@ -13,8 +13,8 @@
 #define BUZZER_PIN D0
 #define PIN_CS D8
 
-const char* ssid = "LAB ELECTRONICA E IA";
-const char* password = "Electro2024.#.";
+const char* ssid = "CGA2121_eCAWRvh";
+const char* password = "fRpG5gJA2HY9sAgzK3";
 
 char day[7][32] = {"Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"};
 char dayEleccion[7][32] = {"\"Dom\"", "\"Lun\"", "\"Mar\"", "\"Mie\"", "\"Jue\"", "\"Vie\"", "\"Sab\""};
@@ -283,8 +283,25 @@ void loop() {
       
     }
     
-  delay(50);
-  }  
+  
+  } else{
+    lcd.setCursor(0, 0);
+    if(hora < 10 && min < 10){
+      sprintf(horaString, "%s 0%d:0%d Grupo:---", day[dia], hora, min);
+    }else if(hora < 10 && min >= 10){
+      sprintf(horaString, "%s 0%d:%d Grupo:---", day[dia], hora, min);
+    }else if(hora >= 10 && min < 10){
+      sprintf(horaString, "%s %d:0%d Grupo:---", day[dia], hora, min);
+    }else{
+      sprintf(horaString, "%s %d:%d Grupo:---", day[dia], hora, min);
+    }
+    lcd.print(horaString); //Dia xx:xx grupo:yyyy
+
+    lcd.setCursor(0, 2);
+    lcd.print("No hay clases");
+    lcd.setCursor(0, 3);
+    lcd.print("disponibles");
+  }
 
     
     
@@ -296,5 +313,5 @@ void loop() {
     
   
     
-    
+    delay(50);
 }
