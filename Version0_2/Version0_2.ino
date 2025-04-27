@@ -44,6 +44,7 @@ byte charNoWifi[] = {
 
 char* archivo;
 JsonDocument clases;
+JsonDocument alumnos;
 DS3231 rtc;
 uint8_t horaInicio;
 uint8_t minutoInicio;
@@ -60,7 +61,7 @@ Adafruit_PN532 nfc(SDA_PIN, SCL_PIN);
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", -21600, 60000);  // Ajuste UTC-6 (México)
 
-void imprimirdatosdetarjeta() {
+void imprimirdatosdetarjeta(int8_t hora, int8_t min, int8_t sec) {
 
   unsigned char data[4];   // Solo se leen 4 bytes por página
   char data2[32] = { 0 };  // Inicializar el buffer con ceros
@@ -110,7 +111,31 @@ fin_lectura:
 
   lcd.setCursor(0, 0);
   lcd.print("Hora: ");
-  lcd.print(timeClient.getFormattedTime());  // Mostrar hora de registro
+  String horaString;
+  if(WiFi.status() == WL_CONNECTED){
+    timeClient.forceUpdate();
+    horaString =  timeClient.getFormattedTime();
+  }else{
+    if (hora < 10 && min < 10 && sec < 10) {
+        sprintf(horaString, "0%d:0%d:0%d", hora, min, sec);  //DIA 0x:0x Gpo:xxxx
+      } else if (hora < 10 && min < 10 && sec < 10) {
+        sprintf(horaString, "0%d:0%d:%d", hora, min, sec);  //DIA 0x:xx Gpo:xxxx
+      } else if (hora < 10 && min >= 10 && sec < 10) {
+        sprintf(horaString, "0%d:%d:0%d", hora, min, sec);  //DIA xx:0x Gpo:xxxx
+      } else if (hora < 10 && min >= 10 && sec >= 10) {
+        sprintf(horaString, "0%d:%d:%d", hora, min, sec);  //DIA 0x:xx Gpo:xxxx
+      } else if (hora >= 10 && min < 10 && sec < 10) {
+        sprintf(horaString, "%d:0%d:0%d", hora, min, sec);  //DIA xx:0x Gpo:xxxx
+      } else if (hora >= 10 && min < 10 && sec >= 10) {
+        sprintf(horaString, "%d:0%d:%d", hora, min, sec);  //DIA 0x:xx Gpo:xxxx
+      } else if hora >= 10 && min >= 10 && sec < 10) {
+        sprintf(horaString, "%d:%d:0%d", hora, min, sec);  //DIA xx:0x Gpo:xxxx
+      } else {
+        sprintf(horaString, "%d:%d:%d", hora, min, sec);  //DIA xx:xx Gpo:xxxx
+      }
+  }
+  
+  lcd.print(horaCad);  // Mostrar hora de registro
 
   for (int i = 0, j = 0; data2[j + (i * 20)] != '\0'; i++) {
     char aux[32] = { 0 };
@@ -125,7 +150,7 @@ fin_lectura:
   }
 }
 
-void chequeoHora(int8_t dia, int8_t hora, int8_t min) {
+void chequeoHora(int8_t dia, int8_t hora, int8_t min, int8_t sec) {
   //Valores para el escaneo rfid
   uint8_t success;
   uint8_t uid[] = { 0, 0, 0, 0, 0, 0, 0 };
@@ -193,8 +218,8 @@ void chequeoHora(int8_t dia, int8_t hora, int8_t min) {
       success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 1000);
       if (success) {
         lcd.clear();
-        tone(BUZZER_PIN, 2500, 500);
-        imprimirdatosdetarjeta();
+        tono();
+        imprimirdatosdetarjeta(hora, min, sec);
         delay(3000);
         lcd.clear();
       }
@@ -282,10 +307,25 @@ void imprimirSimboloInternet(){
   }
 }
 
+void tono(){
+  if(1){
+    //Tono no permitido
+    tone(BUZZER_PIN, 2500, 200);
+    delay(300);
+    tone(BUZZER_PIN, 2500, 200);
+    delay(300);
+    tone(BUZZER_PIN, 2500, 200);
+  }else{
+    //Tono permitido
+    tone(BUZZER_PIN, 2500, 500);
+  }
+}
+
 void setup() {
   Serial.begin(115200);
 
   Serial.println("Iniciando");
+
   //Inicialzacion de pantalla
   lcd.begin(20, 4);
   lcd.init();
@@ -380,23 +420,24 @@ void setup() {
   //Buffer de lectura de la SD del json de clases
   archivo = (char*)malloc(sizeof(char) * 2500);
 
-  //Inicializacion de la tarjeta SD y obtencion de JSON
-  lcd.print("Leyendo SD");
+  //Inicializacion de la tarjeta SD y obtencion de JSON (clases)
+  lcd.setCursor(0, 0);
+  lcd.print("Leyendo SD (clases)");
   int i = 0;
-  File dataFile = SD.open("/Lunes.json");
-  if (dataFile) {
-    while (dataFile.available()) {
-      archivo[i] = dataFile.read();
+  File dataFile2 = SD.open("/Lunes.json");
+  if (dataFile2) {
+    while (dataFile2.available()) {
+      archivo[i] = dataFile2.read();
       i++;
     }
-    dataFile.close();
+    dataFile2.close();
   }
   deserializeJson(clases, archivo);  //Obtencion de las asignaturas y sus horas dentro del objeto llamado clases
   free(archivo);
-  serializeJson(clases[day[2]][numClase[2]]["grupo"], Serial);
-  lcd.clear();
-
+  delay(500);
+  
   if (clases == NULL) {  //Si no se encuentra el archivo JSON Lunes.json en la raiz
+    lcd.clear();
     lcd.setCursor(0, 0);
     lcd.print("No se encontro");
     lcd.setCursor(0, 1);
@@ -405,8 +446,36 @@ void setup() {
   }
   //Fin de inicializacion de la tarjeta SD y obtencion de JSON
 
-  claseActual = 0;  //Se pone la claseActual como 0 para leer de la primera clase
+  //Inicializacion de la tarjeta SD y obtencion de JSON (alumnos)
+  //Buffer de lectura de la SD del json de alumnos
+  archivo = (char*)malloc(sizeof(char) * 2500);
+  lcd.setCursor(0, 0);
+  lcd.print("Leyendo SD (alumnos)");
+  i = 0;
+  File dataFile = SD.open("/alumnos.json");
+  if (dataFile) {
+    while (dataFile.available()) {
+      archivo[i] = dataFile.read();
+      i++;
+    }
+    dataFile.close();
+  }
+  deserializeJson(alumnos, archivo);  //Obtencion de los alumnos y sus grupos dentro del objeto llamado alumnos
+  free(archivo);
+  delay(500);
 
+  if (alumnos == NULL) {  //Si no se encuentra el archivo JSON alumnos.json en la raiz
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("No se encontro");
+    lcd.setCursor(0, 1);
+    lcd.print("un archivo JSON");
+    while (1) delay(100);
+  }
+  //Fin de inicializacion de la tarjeta SD y obtencion de JSON alumnos
+
+  claseActual = 0;  //Se pone la claseActual como 0 para leer de la primera clase
+  
   Wire.begin();
   //Si el tiempo esta desconfigurado
   //if(RTClib::now() <= timeClient.now){
@@ -490,7 +559,7 @@ void loop() {
       hora = rtc.getHour(test, test2);
       Serial.println(rtc.getYear());
     }
-    chequeoHora(dia, hora, min);
+    chequeoHora(dia, hora, min, sec);
 
   }else {
     if(internet == false){
@@ -505,7 +574,7 @@ void loop() {
     dia = timeClient.getDay();
     min = timeClient.getMinutes();
     hora = timeClient.getHours();
-    chequeoHora(dia, hora, min);
+    chequeoHora(dia, hora, min, sec);
     }
     
   }
