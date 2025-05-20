@@ -1,3 +1,4 @@
+//Librerias del códgio
 #include "WiFi.h"
 #include <Wire.h>
 #include <Adafruit_PN532.h>
@@ -8,15 +9,21 @@
 #include <SD.h>
 #include <ArduinoJson.h>
 #include <DS3231.h>
+#include <ESPAsyncWebServer.h>
 
+//Constantes simbólicas
 #define SDA_PIN 21
 #define SCL_PIN 22
 #define BUZZER_PIN 4
 #define PIN_CS 5
 
-const char* ssid = "L3";
-const char* password = "";
+//Constantes de variables de internet
+const char *ssid = "LAB ELECTRONICA E IA";
+const char *password = "Electro2024.#.";
 
+AsyncWebServer server(80);
+
+//Constantes del código
 char day[7][8] = { "Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab" };
 char numClase[7][3] = { "0", "1", "2", "3", "4", "5", "6" };
 
@@ -42,7 +49,8 @@ byte charNoWifi[] = {
   B00000
 };
 
-char* archivo;
+//Variables globales
+char *archivo;
 JsonDocument clases;
 JsonDocument alumnos;
 DS3231 rtc;
@@ -52,23 +60,25 @@ uint8_t horaCierre;
 uint8_t minutoCierre;
 uint8_t claseActual;
 uint16_t grupo;
-const char* nombre;
+const char *nombre;
 bool internet = true;
+bool hayClases = true;
+
 
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 Adafruit_PN532 nfc(SDA_PIN, SCL_PIN);
-
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", -21600, 60000);  // Ajuste UTC-6 (México)
 
+//Función de lectura de datos de tarjeta
 void imprimirdatosdetarjeta(int8_t hora, int8_t min, int8_t sec) {
 
-  unsigned char data[4];   // Solo se leen 4 bytes por página
-  char data2[32] = { 0 };  // Inicializar el buffer con ceros
+  unsigned char data[4];
+  char data2[32] = { 0 };
   uint8_t success;
   uint8_t i, j;
   uint8_t index = 0;
-  bool dentroDelimitador = false;  // Bandera para saber si estamos entre delimitadores
+  bool dentroDelimitador = false;
 
 
   for (i = 7; i < 26; i++) {
@@ -111,36 +121,39 @@ fin_lectura:
 
   lcd.setCursor(0, 0);
   lcd.print("Hora: ");
-  String horaString;
-  if(WiFi.status() == WL_CONNECTED){
+  char horaString[32];
+
+  if (WiFi.status() == WL_CONNECTED) {
     timeClient.forceUpdate();
-    horaString =  timeClient.getFormattedTime();
-  }else{
+    strncpy(horaString, timeClient.getFormattedTime().c_str(), sizeof(horaString));
+    horaString[sizeof(horaString) - 1] = '\0';  // Ensure null-termination
+  } else {
     if (hora < 10 && min < 10 && sec < 10) {
-        sprintf(horaString, "0%d:0%d:0%d", hora, min, sec);  //DIA 0x:0x Gpo:xxxx
-      } else if (hora < 10 && min < 10 && sec < 10) {
-        sprintf(horaString, "0%d:0%d:%d", hora, min, sec);  //DIA 0x:xx Gpo:xxxx
-      } else if (hora < 10 && min >= 10 && sec < 10) {
-        sprintf(horaString, "0%d:%d:0%d", hora, min, sec);  //DIA xx:0x Gpo:xxxx
-      } else if (hora < 10 && min >= 10 && sec >= 10) {
-        sprintf(horaString, "0%d:%d:%d", hora, min, sec);  //DIA 0x:xx Gpo:xxxx
-      } else if (hora >= 10 && min < 10 && sec < 10) {
-        sprintf(horaString, "%d:0%d:0%d", hora, min, sec);  //DIA xx:0x Gpo:xxxx
-      } else if (hora >= 10 && min < 10 && sec >= 10) {
-        sprintf(horaString, "%d:0%d:%d", hora, min, sec);  //DIA 0x:xx Gpo:xxxx
-      } else if hora >= 10 && min >= 10 && sec < 10) {
-        sprintf(horaString, "%d:%d:0%d", hora, min, sec);  //DIA xx:0x Gpo:xxxx
-      } else {
-        sprintf(horaString, "%d:%d:%d", hora, min, sec);  //DIA xx:xx Gpo:xxxx
-      }
+      sprintf(horaString, "0%d:0%d:0%d", hora, min, sec);
+    } else if (hora < 10 && min < 10) {
+      sprintf(horaString, "0%d:0%d:%d", hora, min, sec);
+    } else if (hora < 10 && sec < 10) {
+      sprintf(horaString, "0%d:%d:0%d", hora, min, sec);
+    } else if (hora < 10) {
+      sprintf(horaString, "0%d:%d:%d", hora, min, sec);
+    } else if (min < 10 && sec < 10) {
+      sprintf(horaString, "%d:0%d:0%d", hora, min, sec);
+    } else if (min < 10) {
+      sprintf(horaString, "%d:0%d:%d", hora, min, sec);
+    } else if (sec < 10) {
+      sprintf(horaString, "%d:%d:0%d", hora, min, sec);
+    } else {
+      sprintf(horaString, "%d:%d:%d", hora, min, sec);
+    }
   }
-  
-  lcd.print(horaCad);  // Mostrar hora de registro
+
+  lcd.print(horaString);  // Mostrar hora de registro
 
   for (int i = 0, j = 0; data2[j + (i * 20)] != '\0'; i++) {
     char aux[32] = { 0 };
     for (j = 0; j < 20 && data2[j + (i * 20)] != '\0'; j++) {
       aux[j] = data2[j + (i * 20)];
+      Serial.println(j);
       if (data2[j] == '\0') {
         aux[j] = data2[j + (i * 20)];
       }
@@ -150,6 +163,7 @@ fin_lectura:
   }
 }
 
+//Función para verificar la hora y si se esta en el periodo de alguna materia
 void chequeoHora(int8_t dia, int8_t hora, int8_t min, int8_t sec) {
   //Valores para el escaneo rfid
   uint8_t success;
@@ -212,17 +226,30 @@ void chequeoHora(int8_t dia, int8_t hora, int8_t min, int8_t sec) {
       imprimirSimboloInternet();
       //Termina formateo de hora
 
-      lcd.setCursor(0, 3);
-      lcd.print("Escanea tu tarjeta");  //Escaneo
+      bool hayClasesAux = clases[day[dia]][numClase[claseActual]]["status"];
+      //Serial.println(hayClasesAux);
 
-      success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 1000);
-      if (success) {
-        lcd.clear();
-        tono();
-        imprimirdatosdetarjeta(hora, min, sec);
-        delay(3000);
-        lcd.clear();
+      if (!hayClasesAux && hayClases) {
+        hayClases = false;
       }
+
+      if (hayClases) {
+        lcd.setCursor(0, 3);
+        lcd.print("Escanea tu tarjeta");  //Escaneo
+
+        success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, uid, &uidLength, 1000);
+        if (success) {
+          lcd.clear();
+          tono();
+          imprimirdatosdetarjeta(hora, min, sec);
+          delay(3000);
+          lcd.clear();
+        }
+      } else {
+        lcd.setCursor(0, 3);
+        lcd.print("Clase cancelada");  //No habra clase, fue cancelada
+      }
+
     } else {
       //Si no hay clases, decide que hacer
 
@@ -246,6 +273,7 @@ void chequeoHora(int8_t dia, int8_t hora, int8_t min, int8_t sec) {
 
       } else if (((hora == horaCierre) && (min > minutoCierre) || (hora > horaCierre)) && clases[day[dia]][numClase[claseActual]]["grupo"]) {  //Caso si ya acabo el tiempo de escaneo de una clase, para que se vaya a avanzar a la siguiente hora
         claseActual++;
+        hayClases = true;
         lcd.clear();
         delay(100);
         Serial.println(claseActual);
@@ -273,7 +301,6 @@ void chequeoHora(int8_t dia, int8_t hora, int8_t min, int8_t sec) {
       }
     }
 
-
   } else {  //Caso de dia sin clases (sabado o domingo)
             //Formateo de hora
     lcd.setCursor(0, 0);
@@ -298,29 +325,86 @@ void chequeoHora(int8_t dia, int8_t hora, int8_t min, int8_t sec) {
   delay(50);
 }
 
-void imprimirSimboloInternet(){
+//Función para imprimir simbolo de conexión a internet
+void imprimirSimboloInternet() {
   lcd.setCursor(19, 0);
-  if(WiFi.status() == WL_CONNECTED){
+  if (WiFi.status() == WL_CONNECTED) {
     lcd.write(0);
-  }else{
+  } else {
     lcd.write(1);
   }
 }
 
-void tono(){
-  if(1){
+//Función para emitir tono de chequeo
+void tono() {
+  if (1) {
     //Tono no permitido
     tone(BUZZER_PIN, 2500, 200);
     delay(300);
     tone(BUZZER_PIN, 2500, 200);
     delay(300);
     tone(BUZZER_PIN, 2500, 200);
-  }else{
+  } else {
     //Tono permitido
     tone(BUZZER_PIN, 2500, 500);
   }
 }
 
+//Función que envia y recibe datos a una página web para su registro
+void servidor() {
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String archivo = "";  // Use String to hold file content safely
+
+    File dataFile = SD.open("/Lunes.json");
+    if (dataFile) {
+      while (dataFile.available()) {
+        archivo += (char)dataFile.read();  // Append each char to String
+      }
+      dataFile.close();
+    } else {
+      request->send(500, "text/plain", "Failed to open file");
+      return;
+    }
+
+    AsyncWebServerResponse *response = request->beginResponse(200, "application/json", archivo);
+    response->addHeader("Access-Control-Allow-Origin", "*");
+    response->addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    response->addHeader("Access-Control-Allow-Headers", "*");
+    request->send(response);
+  });
+
+  server.on(
+    "/data", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL,
+    [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+      String receivedText;
+      for (size_t i = 0; i < len; i++) {
+        receivedText += (char)data[i];
+        Serial.print((char)data[i]);
+      }
+
+      Serial.println(len);
+      /*File file = SD.open("/Lunes.json", FILE_WRITE);
+
+  if (file) {
+    file.println(receivedText);
+    file.close();
+    Serial.println("File written successfully.");
+  } else {
+    Serial.println("Failed to open file for writing.");
+  }*/
+
+      AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "Received on ESP32!");
+      response->addHeader("Access-Control-Allow-Origin", "*");
+      response->addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      response->addHeader("Access-Control-Allow-Headers", "*");
+      request->send(response);
+      delay(1000);
+    });
+
+  server.begin();
+}
+
+//Función de inicialización de código
 void setup() {
   Serial.begin(115200);
 
@@ -390,8 +474,8 @@ void setup() {
         lcd.print(cont2);
         lcd.print(" ");
       } else if (cont == 2) {
-        lcd.print("1 segundo  mas");
-      }else {
+        lcd.print("1  segundo  mas");
+      } else {
         lcd.print(cont2);
       }
     }
@@ -400,7 +484,11 @@ void setup() {
   if (WiFi.status() == WL_CONNECTED) {
     lcd.clear();
     lcd.print("Conectado!");
-    delay(1000);
+    lcd.setCursor(0, 1);
+    lcd.print(WiFi.localIP());
+    delay(2000);
+    servidor();
+
   } else {
     lcd.clear();
     lcd.print("Sin internet...");
@@ -412,13 +500,13 @@ void setup() {
   internet = false;
 
   lcd.clear();
-  imprimirSimboloInternet();
+  //imprimirSimboloInternet();
   //Fin de conexion de internet inicial
 
   timeClient.begin();  // Iniciar NTP
 
   //Buffer de lectura de la SD del json de clases
-  archivo = (char*)malloc(sizeof(char) * 2500);
+  archivo = (char *)malloc(sizeof(char) * 2500);
 
   //Inicializacion de la tarjeta SD y obtencion de JSON (clases)
   lcd.setCursor(0, 0);
@@ -435,7 +523,7 @@ void setup() {
   deserializeJson(clases, archivo);  //Obtencion de las asignaturas y sus horas dentro del objeto llamado clases
   free(archivo);
   delay(500);
-  
+
   if (clases == NULL) {  //Si no se encuentra el archivo JSON Lunes.json en la raiz
     lcd.clear();
     lcd.setCursor(0, 0);
@@ -448,7 +536,7 @@ void setup() {
 
   //Inicializacion de la tarjeta SD y obtencion de JSON (alumnos)
   //Buffer de lectura de la SD del json de alumnos
-  archivo = (char*)malloc(sizeof(char) * 2500);
+  archivo = (char *)malloc(sizeof(char) * 2500);
   lcd.setCursor(0, 0);
   lcd.print("Leyendo SD (alumnos)");
   i = 0;
@@ -475,7 +563,7 @@ void setup() {
   //Fin de inicializacion de la tarjeta SD y obtencion de JSON alumnos
 
   claseActual = 0;  //Se pone la claseActual como 0 para leer de la primera clase
-  
+
   Wire.begin();
   //Si el tiempo esta desconfigurado
   //if(RTClib::now() <= timeClient.now){
@@ -514,10 +602,14 @@ void setup() {
     delay(1500);
     lcd.clear();
     timeClient.update();
+
     //}
+  }else{
+    lcd.clear();
   }
 }
 
+//Función que ejecuta el código principal
 void loop() {
 
   bool test;
@@ -526,10 +618,11 @@ void loop() {
   int8_t dia;
   int8_t min;
   int8_t hora;
+  int8_t sec;
 
   //Comprobacion de internet
-  if (WiFi.status() != WL_CONNECTED) {
-    if(internet == true){
+  if (WiFi.status() != WL_CONNECTED) { //Si no hay internet
+    if (internet == true) {
       lcd.clear();
       delay(50);
       internet = false;
@@ -553,29 +646,35 @@ void loop() {
       dia = timeClient.getDay();
       min = timeClient.getMinutes();
       hora = timeClient.getHours();
+      sec = timeClient.getSeconds();
     } else {
       dia = rtc.getDoW() - 1;
       min = rtc.getMinute();
       hora = rtc.getHour(test, test2);
-      Serial.println(rtc.getYear());
+      sec = rtc.getSecond();
     }
     chequeoHora(dia, hora, min, sec);
 
-  }else {
-    if(internet == false){
+  } else {
+    if (internet == false) {
       lcd.clear();
       delay(50);
       internet = true;
     }
     timeClient.forceUpdate();  //Actualizacion de la hora actual
-    Serial.println(timeClient.getEpochTime());
-    if(timeClient.getEpochTime() < 4294945700){
-    Serial.println("Con internet");
-    dia = timeClient.getDay();
-    min = timeClient.getMinutes();
-    hora = timeClient.getHours();
-    chequeoHora(dia, hora, min, sec);
+    //Serial.println(timeClient.getEpochTime());
+    if (timeClient.getEpochTime() < 2085956896) {
+      //Serial.println("Con internet");
+      dia = timeClient.getDay();
+      min = timeClient.getMinutes();
+      hora = timeClient.getHours();
+      sec = timeClient.getSeconds();
+      chequeoHora(dia, hora, min, sec);
+    }else{
+      //Hora invalida, notifica al usuario
+      lcd.clear();
+      lcd.setCursor(0, 0);
+      lcd.print("Obteniendo la hora...");
     }
-    
   }
 }
