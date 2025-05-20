@@ -63,6 +63,7 @@ uint16_t grupo;
 const char *nombre;
 bool internet = true;
 bool hayClases = true;
+bool reseteando = false;
 
 
 LiquidCrystal_I2C lcd(0x27, 20, 4);
@@ -352,7 +353,7 @@ void tono() {
 
 //Función que envia y recibe datos a una página web para su registro
 void servidor() {
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+  server.on("/enviar", HTTP_GET, [](AsyncWebServerRequest *request) {
     String archivo = "";  // Use String to hold file content safely
 
     File dataFile = SD.open("/Lunes.json");
@@ -373,33 +374,56 @@ void servidor() {
     request->send(response);
   });
 
-  server.on(
-    "/data", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL,
-    [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
-      String receivedText;
-      for (size_t i = 0; i < len; i++) {
-        receivedText += (char)data[i];
-        Serial.print((char)data[i]);
-      }
+  String receivedText = ""; // Global or static to persist across chunks
 
-      Serial.println(len);
-      /*File file = SD.open("/Lunes.json", FILE_WRITE);
+server.on("/recibir", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL,
+[](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total) {
+    static String bodyBuffer;  // Static so it persists across chunks
 
-  if (file) {
-    file.println(receivedText);
-    file.close();
-    Serial.println("File written successfully.");
-  } else {
-    Serial.println("Failed to open file for writing.");
-  }*/
+    for (size_t i = 0; i < len; i++) {
+        bodyBuffer += (char)data[i];
+    }
 
-      AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "Received on ESP32!");
-      response->addHeader("Access-Control-Allow-Origin", "*");
-      response->addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-      response->addHeader("Access-Control-Allow-Headers", "*");
-      request->send(response);
-      delay(1000);
-    });
+    if (index + len == total) {
+        Serial.println("Full body received:");
+        Serial.println(bodyBuffer);
+        Serial.print("Size: ");
+        Serial.println(total);
+
+        // Save to file if needed
+        
+        File file = SD.open("/Lunes.json", FILE_WRITE);
+        if (file) {
+            file.println(bodyBuffer);
+            file.close();
+            Serial.println("File written successfully.");
+        } else {
+            Serial.println("Failed to open file for writing.");
+        }
+        // Send response
+        AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "Datos recibidos en ESP32! Reiniciando...");
+        response->addHeader("Access-Control-Allow-Origin", "*");
+        response->addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        response->addHeader("Access-Control-Allow-Headers", "*");
+        request->send(response);
+
+        // Reset buffer
+        bodyBuffer = "";
+        reseteando = true;
+        lcd.clear();
+        delay(100);
+        lcd.setCursor(0, 0);
+        lcd.print("Datos actualizados");
+        lcd.setCursor(0, 1);
+        lcd.print("de horarios.");
+        lcd.setCursor(0, 2);
+        lcd.print("Reseteando el ESP32.");
+        delay(5000);
+        WiFi.disconnect(true);  // Optional
+        delay(100);             // Allow cleanup
+        ESP.restart();
+    }
+});
 
   server.begin();
 }
@@ -620,6 +644,7 @@ void loop() {
   int8_t hora;
   int8_t sec;
 
+  if(!reseteando){
   //Comprobacion de internet
   if (WiFi.status() != WL_CONNECTED) { //Si no hay internet
     if (internet == true) {
@@ -676,5 +701,6 @@ void loop() {
       lcd.setCursor(0, 0);
       lcd.print("Obteniendo la hora...");
     }
+  }
   }
 }
