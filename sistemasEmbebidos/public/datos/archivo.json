@@ -1,0 +1,142 @@
+{
+   "Lun" :{
+        "0" :{
+            "h_inicio": 9,
+            "m_inicio": 30,
+            "h_fin": 11,
+            "m_fin": 0,
+            "status": true,
+            "grupo": 604,
+			"nombre": "Sistemas embebidos",
+            "id":10
+        },
+        "1" :{
+            "h_inicio": 11,
+            "m_inicio": 30,
+            "h_fin": 13,
+            "m_fin": 0,
+            "status": true,
+            "grupo":404,
+			"nombre": "Computo reconfig.",
+            "id":11
+        },
+        "2" :{
+            "h_inicio": 14,
+            "m_inicio": 0,
+            "h_fin": 16,
+            "m_fin": 0,
+            "status": true,
+            "grupo":604,
+			"nombre": "Debugging",
+            "id":12
+        }
+    },
+    "Mar" :{
+        "0" :{
+            "h_inicio": 8,
+            "m_inicio": 0,
+            "h_fin": 9,
+            "m_fin": 30,
+            "status": true,
+            "grupo":604,
+	    "nombre": "Sistemas embebidos",
+            "id":20
+        },
+        "1" :{
+            "h_inicio": 9,
+            "m_inicio": 30,
+            "h_fin": 11,
+            "m_fin": 30,
+            "status": true,
+            "grupo":604,
+	    "nombre": "D. S. O. a O.",
+            "id":21
+        },
+        "2" :{
+            "h_inicio": 13,
+            "m_inicio": 30,
+            "h_fin": 17,
+            "m_fin": 0,
+            "status": true,
+            "grupo":604,
+	    "nombre": "Redes I",
+            "id":22
+        }
+    },
+    "Mie" :{
+        "0" :{
+            "h_inicio": 8,
+            "m_inicio": 0,
+            "h_fin": 9,
+            "m_fin": 30,
+            "status": true,
+            "grupo":804,
+	    "nombre": "I. A.",
+            "id":30
+        }, 
+        "1" :{
+            "h_inicio": 11,
+            "m_inicio": 30,
+            "h_fin": 13,
+            "m_fin": 0,
+            "status": true,
+            "grupo":404,
+			"nombre": "Computo reconfig.",
+            "id":31
+        }
+    },
+    "Jue" :{
+        "0" :{
+            "h_inicio": 8,
+            "m_inicio": 0,
+            "h_fin": 10,
+            "m_fin": 0,
+            "status": true,
+            "grupo":604,
+			"nombre": "Sistemas embebidos",
+            "id":40
+        }, 
+        "1" :{
+            "h_inicio": 11,
+            "m_inicio": 30,
+            "h_fin": 13,
+            "m_fin": 0,
+            "status": true,
+            "grupo":804,
+			"nombre": "I. A.",
+            "id":41
+        }
+    },
+    "Vie" :{
+        "0" :{
+            "h_inicio": 9,
+            "m_inicio": 30,
+            "h_fin": 11,
+            "m_fin": 30,
+            "status": true,
+            "grupo":804,
+			"nombre": "I. A.",
+            "id":50
+        },
+        "1" :{
+            "h_inicio": 11,
+            "m_inicio": 30,
+            "h_fin": 13,
+            "m_fin": 0,
+            "status": true,
+            "grupo":1004,
+			"nombre": "Omar takeover",
+            "id":51
+        },
+		"2" :{
+            "h_inicio": 15,
+            "m_inicio": 0,
+            "h_fin": 17,
+            "m_fin": 30,
+            "status": true,
+            "grupo":604,
+			"nombre": "Redes I",
+            "id":52
+        }
+    }
+}
