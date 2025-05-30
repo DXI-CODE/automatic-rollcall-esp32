@@ -1,0 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+
+* {
+    font-family: "Orbitron", sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f7f5f2;
+    color: #222;
+}
+
+/* Encabezado */
+.head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1em;
+    background: linear-gradient(to right,#0379be, #d7ede2);
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.unistmo {
+    height: 100px;
+    max-width: 45%;
+}
+
+.computacion {
+    height: 60px;
+    max-width: 35%;
+}
+
+/* Contenido principal */
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2em 1em;
+    gap: 2em;
+    text-align: center;
+}
+
+.description {
+    font-size: 1.8em;
+    font-weight: 600;
+}
+
+/* Opciones */
+.content-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2em;
+    width: 100%;
+    max-width: 800px;
+}
+
+.option {
+    display: flex;
+    align-items: center;
+    background-color: #0379be;
+    width: 90%;
+    max-width: 500px;
+    padding: 1em;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.3s;
+    box-shadow: 1px 3px 5px rgba(0, 0, 0, 0.2);
+}
+
+.option:hover {
+    transform: translateY(-5px);
+    background-color: #d7ede2;
+    box-shadow: 1px 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.option:hover .datito {
+    color: #0379be;
+}
+
+.option img {
+    width: 60px;
+    height: 60px;
+    margin-right: 1em;
+}
+
+.line {
+    width: 2px;
+    height: 60px;
+    background-color: #000000;
+    margin-right: 1em;
+}
+
+.datito {
+    font-size: 1.3em;
+    font-weight: 600;
+    color: #d7ede2;;
+}
+
+
+/* 📱 Responsivo */
+@media (max-width: 768px) {
+    .head {
+        flex-direction: column;
+    }
+
+    .unistmo, .computacion {
+        margin: 0.5em auto;
+        height: auto;
+        width: 70%;
+    }
+
+    .option {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .line {
+        display: none;
+    }
+
+    .option img {
+        margin: 0 0 0.5em 0;
+    }
+
+    .datito {
+        font-size: 1.1em;
+    }
+
+    .description {
+        font-size: 1.3em;
+        padding: 0 1em;
+    }
+}

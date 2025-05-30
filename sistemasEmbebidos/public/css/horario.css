@@ -1,0 +1,232 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap');
+
+* {
+    font-family: "Orbitron", sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #f7f5f2;
+    color: #222;
+}
+
+/* Encabezado */
+.head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1em;
+    background: linear-gradient(to right,#0379be, #d7ede2);
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.unistmo {
+    height: 100px;
+    max-width: 45%;
+}
+
+.computacion {
+    height: 60px;
+    max-width: 35%;
+}
+
+/* Contenido principal */
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2em 1em;
+    gap: 2em;
+    text-align: center;
+}
+
+.regresar {
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+    padding-left: 2em;
+}
+
+.regresa-inicio {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.6em 1.2em;
+    background-color: #0379be;
+    color: #d7ede2;
+    font-size: 1em;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.regresa-inicio:hover {
+    background-color: #025a8c;
+    transform: translateY(-2px);
+}
+
+/* Ícono dentro del botón */
+.regresa-inicio img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.search {
+    display: flex;
+    width: 60%;
+    border-radius: 1em;
+    margin-bottom: 1em;
+    box-shadow: 3px 3px 3px rgba(0, 0, 0, 0.3);
+    overflow: hidden; /* evita bordes raros */
+    background-color: #e0e0e0;
+}
+
+/* Estilo bonito para el input */
+.search input {
+    flex: 1;
+    border: none;
+    padding: 0.8em 1em;
+    font-size: 1em;
+    background-color: #f2f2f2;
+    color: #333;
+    transition: 0.3s ease;
+}
+
+.search input::placeholder {
+    color: #999;
+    font-style: italic;
+}
+
+.search input:focus {
+    outline: none;
+    background-color: #fff;
+}
+
+/* Botón más pequeño y centrado */
+.search button {
+    background-color: #0379be;
+    border: none;
+    padding: 0 1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+}
+
+.search button:hover {
+    background-color: #025a8c;
+}
+
+/* Ícono de lupa más pequeño */
+.search button img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.content-option{
+    margin-top: 1em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2em;
+    width: 100%;
+}
+
+.print{
+    margin: 1em;
+    display: grid;
+    width: 70%;
+    place-items: center;
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.class{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 250px;
+    background-color: rgb(255, 255, 255);
+    border-radius: 30px;
+    padding: .5em;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1em;
+}
+
+.class-row1{
+    display: flex;
+    padding: .2em;
+    flex-direction: row;
+    align-items: center;
+    height: 20px;
+    justify-content: space-between;
+}
+
+.rectangulo{
+    width: 90%;
+    height: 10px;
+    background-color: #e2e2e2;
+    border-radius: 10px;
+}
+
+.status{
+    border-radius: 15px;
+    height: 15px;
+    width: 15px;
+    background-color: rgb(42, 255, 42);
+}
+
+.floating-menu {
+    position: absolute;
+    top: 300px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    padding: 0.5em;
+    width: 400px;
+    z-index: 1000;
+    display: none;
+    transition: all 0.3s ease;
+}
+
+.row-1{
+    display: flex;
+    justify-content: flex-end;
+    height: 10px;
+}
+
+.btn-cerrar{
+    font-size: 15px;
+    padding-right: 1em;
+    cursor: pointer;
+}
+
+.row-2 a{
+  display: block;
+  padding: 0.75em 1em;
+  color: #333;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.row-3{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.cambio{
+    width: 40px;
+}
+
+.bx-microchip{
+    font-size: 25px;
+    transform: rotate(90deg);
+}
