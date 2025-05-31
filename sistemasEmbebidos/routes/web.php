@@ -10,3 +10,5 @@ Route::get('/', function () {
 Route::get('/alumno', [VistasController::class, 'alumno']);
 Route::get('/horario', [VistasController::class, 'horario']);
 
+
+

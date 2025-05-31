@@ -123,7 +123,7 @@
             "m_inicio": 30,
             "h_fin": 13,
             "m_fin": 0,
-            "status": true,
+            "status": false,
             "grupo":1004,
 			"nombre": "Omar takeover",
             "id":51

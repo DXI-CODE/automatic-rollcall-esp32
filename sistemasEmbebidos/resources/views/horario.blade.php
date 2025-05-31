@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{asset('/css/horario.css')}}">
     <title>Horarios</title>
 </head>
@@ -15,10 +16,10 @@
         </div>
         <div class="content">
 
-           <a href="/views/welcome.blade.php" class="regresa-inicio">
+           <div class="regresa-inicio">
                 <img src="{{asset('datos/icon-home.webp')}}" alt="Inicio">
                 Inicio
-            </a>
+           </div>
             
             <div>
                 <h1 class="description">CONTROL DE HORARIOS LABÓRATORIO DE ELECTRÓNICA E IA</h1>
