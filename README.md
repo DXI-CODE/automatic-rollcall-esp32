@@ -18,5 +18,3 @@ Tecnologías utilizadas:
 - Sistemas embebidos
 
 ![WhatsApp Image 2025-05-26 at 13 42 17_b5c0068e](https://github.com/user-attachments/assets/c59a7279-2ad3-4c8c-ac31-54bac52fd310)
-
-test
