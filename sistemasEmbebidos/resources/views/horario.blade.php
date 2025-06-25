@@ -44,6 +44,7 @@
         <div class="row-3">
             <button id="edit">Editar</button>
             <button id="acep" style="display: none">Aceptar</button>
+            <button id="save" style="display: none">Aceptar</button>
         </div>
     </div>
 </body>

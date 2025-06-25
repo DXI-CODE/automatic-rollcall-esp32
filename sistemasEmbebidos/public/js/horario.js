@@ -12,18 +12,28 @@ document.getElementById("btn").addEventListener("click", ()=>{
             pedir("Don");
             break;
         case 1:
+            diaGlobal = "Lun";
+            numdia = 1;
             pedir("Lun");
             break;
         case 2:
+            diaGlobal = "Mar";
+            numdia = 2;
             pedir("Mar");
             break;
         case 3:
+            diaGlobal = "Mie";
+            numdia = 3;
             pedir("Mie");
             break;
         case 4:
+            diaGlobal = "Jue";
+            numdia = 4;
             pedir("Jue");
             break;
         case 5:
+            diaGlobal = "Vie";
+            numdia = 5;
             pedir("Vie");
             break;
         case 6:
@@ -46,7 +56,6 @@ function pedir(day){
                 if(day == key){
                     let div = document.createElement("div");
                     div.classList.add("class");
-                    div.id = data[key][otra].id;
                     if(data[key][otra].status == true){
                         div.innerHTML = `  <div class="class-row1">
                                             <div class="rectangulo"></div><div class="status-green"></div>
@@ -60,7 +69,8 @@ function pedir(day){
                                                 </div>
                                             </div>
                                             <div class="class-colum2">
-                                                <i class='bx bx-trash'></i>
+                                                <i class='bx bxs-edit-alt' id="${data[key][otra].id}"></i>
+                                                <i class='bx bx-trash' id="${data[key][otra].id}"></i>
                                             </div>
                                         </div>
                                         `
@@ -77,7 +87,8 @@ function pedir(day){
                                                 </div>
                                             </div>
                                             <div class="class-colum2">
-                                                <i class='bx bx-trash'></i>
+                                                <i class='bx bxs-edit-alt' id="${data[key][otra].id}"></i>
+                                                <i class='bx bx-trash' id="${data[key][otra].id}"></i>
                                             </div>
                                         </div>
                                         `
@@ -96,7 +107,7 @@ function pedir(day){
 }*/
 
 document.addEventListener("click", function(event) {
-    let div = event.target.closest(".class");
+    let div = event.target.closest(".bxs-edit-alt");
     if (div) {
         document.querySelector("#menu").style.display = "block";
         id = div.id;
@@ -105,6 +116,14 @@ document.addEventListener("click", function(event) {
     document.getElementById("edit").addEventListener("click", ()=>{
         editar(id);
     });
+});
+
+document.addEventListener("click", function(event) {
+    let div = event.target.closest(".bx-trash");
+    if (div) {
+        console.log("Eliminado");
+        eliminar(div.id);
+    }
 });
 
 document.addEventListener("click", function(event){
@@ -119,7 +138,10 @@ document.addEventListener("click", function(event){
                                                             <input type="text" id="min-in" class="cambio"></p>
                             <p id="hfi-c">Hora de fin: <input type="text" id="hfi-in" class="cambio"> :
                                                         <input type="text" id="mfi-in" class="cambio"></p>
-                            <p id="est-c">Estado: <input type="text" id="est-in" class="cambio"></p>`
+                            <p id="est-c">Estado:   <select id="estado-select">
+                                                        <option value="true">true</option>
+                                                        <option value="false">false</option>
+                                                    </select></p>`
         print.appendChild(div)
         let edit = document.getElementById("edit")
         edit.style.display = "none";
@@ -137,13 +159,37 @@ document.getElementById("acep").addEventListener("click", ()=>{
             m_inicio: document.getElementById("min-in").value,
             h_fin: document.getElementById("hfi-in").value,
             m_fin: document.getElementById("mfi-in").value,
-            status: document.getElementById("est-in").value === true,
+            status: document.getElementById("estado-select").value === "true",
             id: (10*numdia)+(nextIndex)
         }
     aux[diaGlobal][nextIndex.toString()] = nuevo;
     console.log(aux)
     add();
 });
+
+function eliminar(id){
+    let i = 0;
+    for(let otra in aux[diaGlobal]){
+        if(aux[diaGlobal][otra].id == id){
+            delete aux[diaGlobal][otra];
+            break;
+        }
+    }
+
+    for(let key in aux[diaGlobal]){
+        let ayuda = aux[diaGlobal][key];
+        delete aux[diaGlobal][key];
+        aux[diaGlobal][i.toString()] = ayuda;
+        i++;
+    }
+    i = 0;
+    for(let key in aux[diaGlobal]){
+        aux[diaGlobal][key].id = (10*numdia)+(i);
+    }
+
+    console.log(aux)
+    add();
+}
 
 function add(){
     fetch(`http://${ip}/recibir`, {
@@ -156,6 +202,7 @@ function add(){
     .then(response => response.text())
     .then(result => {
         console.log("ESP32 responded:", result);
+        //pedir(diaGlobal);
         document.querySelector("#menu").style.display = "none";
     })
     .catch(error => {
@@ -170,25 +217,23 @@ function mostrarInfo(id){
     acep.style.display = "none";
     let print = document.querySelector(".row-2");
     print.innerHTML = "";
-    for(let key in aux){
-        for(let otra in aux[key]){
-            if(aux[key][otra].id == id){
-                clase = aux[key][otra]
-                let div = document.createElement("div");
-                div.innerHTML = `   <h3 id="nom-c">${aux[key][otra].nombre}</h3>
-                                    <p id="gru-c">Grupo: ${aux[key][otra].grupo}</p>
-                                    <p id="hin-c">Hora de inicio: ${aux[key][otra].h_inicio}:${aux[key][otra].m_inicio}</p>
-                                    <p id="hfi-c">Hora de fin: ${aux[key][otra].h_fin}:${aux[key][otra].m_fin}</p>
-                                    <p id="est-c">Estado: ${aux[key][otra].status === true}</p>`
+    for(let otra in aux[diaGlobal]){
+        if(aux[diaGlobal][otra].id == id){
+            clase = aux[diaGlobal][otra]
+            let div = document.createElement("div");
+            div.innerHTML = `   <h3 id="nom-c">${aux[diaGlobal][otra].nombre}</h3>
+                                <p id="gru-c">Grupo: ${aux[diaGlobal][otra].grupo}</p>
+                                <p id="hin-c">Hora de inicio: ${aux[diaGlobal][otra].h_inicio}:${aux[diaGlobal][otra].m_inicio}</p>
+                                <p id="hfi-c">Hora de fin: ${aux[diaGlobal][otra].h_fin}:${aux[diaGlobal][otra].m_fin}</p>
+                                <p id="est-c">Estado: ${aux[diaGlobal][otra].status === "true"}</p>`
                                     
-                print.appendChild(div)
-            }
+            print.appendChild(div)
         }
     }
 }
 
 document.querySelector(".btn-cerrar").addEventListener("click", ()=>{
-        document.querySelector("#menu").style.display = "none";
+    document.querySelector("#menu").style.display = "none";
 });
 
 function editar(id){
@@ -198,46 +243,56 @@ function editar(id){
                                                                 <input type="text" id="min-in" class="cambio" value="${clase.m_inicio}">`;
     document.getElementById("hfi-c").innerHTML = `Hora fin:  <input type="text" id="hfi-in" class="cambio" value="${clase.h_fin}"> :
                                                                 <input type="text" id="mfi-in" class="cambio" value="${clase.m_fin}">`;
-    document.getElementById("est-c").innerHTML = `Estado:  <input type="text" id="est-in" class="cambio" value="${clase.status}">`;
-    let acep = document.getElementById("acep")
-    acep.style.display = "block";
-    let edit = document.getElementById("edit")
-    edit.style.display = "none";
-    acep.addEventListener("click", ()=>{
-        acep.style.display = "none";
-        for(let key in aux){
-            for(let otra in aux[key]){
-                if(aux[key][otra].id == id){
-                    if(document.getElementById("nom-in").value != ""){
-                        aux[key][otra].nombre = document.getElementById("nom-in").value;
-                    }
-                    if(document.getElementById("gru-in").value != ""){
-                        aux[key][otra].grupo = document.getElementById("gru-in").value;
-                    }
+    if(clase.status == true){
+        document.getElementById("est-c").innerHTML = `Estado:   <select id="estado-select">
+                                                                <option value="true">true</option>
+                                                                <option value="false">false</option>
+                                                            </select>
+                                                            `;
+    }else{
+        document.getElementById("est-c").innerHTML = `Estado:   <select id="estado-select">
+                                                                <option value="false">false</option>
+                                                                <option value="true">true</option>
+                                                            </select>
+                                                            `;
+    }
+    document.getElementById("save").style.display = "block";
+    document.getElementById("edit").style.display = "none";
+}
 
-                    if(document.getElementById("hin-in").value != ""){
-                        aux[key][otra].h_inicio = document.getElementById("hin-in").value;
-                    }
-
-                    if(document.getElementById("min-in").value != ""){
-                        aux[key][otra].m_inicio = document.getElementById("min-in").value;
-                    }
-
-                    if(document.getElementById("hfi-in").value != ""){
-                        aux[key][otra].h_fin = document.getElementById("hfi-in").value;
-                    }
-                    
-                    if(document.getElementById("mfi-in").value != ""){
-                        aux[key][otra].m_fin = document.getElementById("mfi-in").value;
-                    }
-                    
-                    if(document.getElementById("est-in").value != ""){
-                        aux[key][otra].status = document.getElementById("est-in").value;
-                    }
-                }
+document.getElementById("save").addEventListener("click", ()=>{
+    acep.style.display = "none";
+    for(let otra in aux[diaGlobal]){
+        if(aux[diaGlobal][otra].id == id){
+            if(document.getElementById("nom-in").value != ""){
+                aux[diaGlobal][otra].nombre = document.getElementById("nom-in").value;
             }
+            if(document.getElementById("gru-in").value != ""){
+                aux[diaGlobal][otra].grupo = document.getElementById("gru-in").value;
+            }
+
+            if(document.getElementById("hin-in").value != ""){
+                aux[diaGlobal][otra].h_inicio = document.getElementById("hin-in").value;
+            }
+
+            if(document.getElementById("min-in").value != ""){
+                aux[diaGlobal][otra].m_inicio = document.getElementById("min-in").value;
+            }
+
+            if(document.getElementById("hfi-in").value != ""){
+                aux[diaGlobal][otra].h_fin = document.getElementById("hfi-in").value;
+            }
+                    
+            if(document.getElementById("mfi-in").value != ""){
+                aux[diaGlobal][otra].m_fin = document.getElementById("mfi-in").value;
+            }
+                    
+            aux[diaGlobal][otra].status = document.getElementById("estado-select").value === "true";        
         }
-        fetch(`http://${ip}/recibir`, {
+    }
+    console.log(aux);
+    add();
+        /*fetch(`http://${ip}/recibir`, {
             method: "POST",
             headers: {
             "Content-Type": "text/plain"
@@ -247,14 +302,13 @@ function editar(id){
         .then(response => response.text())
         .then(result => {
             console.log("ESP32 responded:", result);
-            edit.style.display = "block";
-            acep.style.display = "none";
+            document.getElementById("save").style.display = "none";
+            document.getElementById("edit").style.display = "block";
         })
         .catch(error => {
             console.error("Error sending data:", error);
-        });
-    })
-}
+        });*/
+})
 
 document.querySelector(".regresa-inicio").addEventListener("click", ()=>{
     window.location.href = "/";
@@ -315,7 +369,6 @@ function pedir(day){
                 if(day == key){
                     let div = document.createElement("div");
                     div.classList.add("class");
-                    div.id = data[key][otra].id;
                     if(data[key][otra].status == true){
                         div.innerHTML = `  <div class="class-row1">
                                             <div class="rectangulo"></div><div class="status-green"></div>
@@ -323,14 +376,14 @@ function pedir(day){
                                         <div class="class-row2">
                                             <div class="class-colum1">
                                                 <h3>${data[key][otra].nombre}</h3>
-                                                <div class="line-v"></div>
                                                 <div class="grupo-content">
                                                     <p>Grupo:</p>
                                                     <p>${data[key][otra].grupo}</p>
                                                 </div>
                                             </div>
                                             <div class="class-colum2">
-                                                <i class='bx bx-trash'></i>
+                                                <i class='bx bxs-edit-alt' id="${data[key][otra].id}"></i>
+                                                <i class='bx bx-trash' id="${data[key][otra].id}"></i>
                                             </div>
                                         </div>
                                         `
@@ -341,14 +394,14 @@ function pedir(day){
                                         <div class="class-row2">
                                             <div class="class-colum1">
                                                 <h3>${data[key][otra].nombre}</h3>
-                                                <div class="line-v"></div>
                                                 <div class="grupo-content">
                                                     <p>Grupo:</p>
                                                     <p>${data[key][otra].grupo}</p>
                                                 </div>
                                             </div>
                                             <div class="class-colum2">
-                                                <i class='bx bx-trash'></i>
+                                                <i class='bx bxs-edit-alt' id="${data[key][otra].id}"></i>
+                                                <i class='bx bx-trash' id="${data[key][otra].id}"></i>
                                             </div>
                                         </div>
                                         `

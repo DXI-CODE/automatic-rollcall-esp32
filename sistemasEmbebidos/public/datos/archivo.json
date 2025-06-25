@@ -15,7 +15,7 @@
             "m_inicio": 30,
             "h_fin": 13,
             "m_fin": 0,
-            "status": true,
+            "status": false,
             "grupo":404,
 			"nombre": "Computo reconfig.",
             "id":11
@@ -125,7 +125,7 @@
             "m_fin": 0,
             "status": false,
             "grupo":1004,
-			"nombre": "Omar takeover",
+			"nombre": "Clase Profe Omar",
             "id":51
         },
 		"2" :{
